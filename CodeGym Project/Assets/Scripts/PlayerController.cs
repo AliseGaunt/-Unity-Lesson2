@@ -9,50 +9,60 @@ public class PlayerController : MonoBehaviour
     public Vector3[] checkpoints = new Vector3[4];
     public int targetCheckpoint;
     public bool isRotating;
+    public enum DriveMode
+    {
+        Manual,
+        Automatic
+    }
+    public DriveMode mode;
     // Start is called before the first frame update
     void Start()
     {
         targetCheckpoint = 0;
         isRotating = false;
+        mode = DriveMode.Manual;
     }
 
     // Update is called once per frame
     void Update()
     {
-        MovingFoward(targetCheckpoint);
+        switch (mode)
+        {
+            case DriveMode.Manual:
+                ManualMode();
+                break;
+            case DriveMode.Automatic:
+                AutomaticMode(); 
+                break;
+        }
+    }
+    void AutomaticMode()
+    {
         if ((transform.position - checkpoints[targetCheckpoint]).magnitude < 0.1f && isRotating is false)
         {
-            if (targetCheckpoint < 3) targetCheckpoint++;
-            else targetCheckpoint = 0;
+            SetNextTarget();
             isRotating = true;
         }
+        else MovingFoward(targetCheckpoint);
         if (isRotating) RotateToLeft();
     }
-
+    void ManualMode()
+    {
+        transform.position += transform.TransformDirection(0f, 0f, Input.GetAxis("Vertical") * Time.deltaTime * mySpeed);
+        transform.Rotate(Vector3.up, Input.GetAxis("Horizontal"));
+    }
     void MovingFoward(int myTarget)
     {
-        switch (myTarget)
-        {
-            case 0:
-                transform.position = new Vector3(transform.position.x, transform.position.y, transform.position.z + mySpeed * Time.deltaTime);
-                break;
-            case 1:
-                transform.position = new Vector3(transform.position.x - mySpeed * Time.deltaTime, transform.position.y, transform.position.z);
-                break;
-            case 2:
-                transform.position = new Vector3(transform.position.x, transform.position.y, transform.position.z - mySpeed * Time.deltaTime);
-                break;
-            case 3:
-                transform.position = new Vector3(transform.position.x + mySpeed * Time.deltaTime, transform.position.y, transform.position.z);
-                break;
-        }
-
+        transform.position = Vector3.MoveTowards(transform.position, checkpoints[myTarget], mySpeed * Time.deltaTime);
     }
     void RotateToLeft()
     {
         transform.Rotate(Vector3.down, 90f);
         isRotating = false;
-
     }
-
+    void SetNextTarget()
+    {
+        if (targetCheckpoint < 3) targetCheckpoint++;
+        else targetCheckpoint = 0;
+    }    
 }
